@@ -1,4 +1,7 @@
-"""Benchling Canvas webhook handler for Vercel."""
+"""Benchling Canvas webhook handler for Vercel.
+
+Uses BaseHTTPRequestHandler as per Vercel Python runtime documentation.
+"""
 from http.server import BaseHTTPRequestHandler
 import json
 from datetime import datetime
