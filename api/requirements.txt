@@ -1,5 +1,6 @@
-# Add your Python dependencies here
-# Example:
-# requests==2.31.0
-# pydantic==2.5.0
+# Benchling SDK
+benchling-sdk>=2.0.0
+
+# Timezone support
+pytz>=2023.3
 
