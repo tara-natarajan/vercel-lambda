@@ -27,23 +27,40 @@ class handler(BaseHTTPRequestHandler):
     
     def do_POST(self):
         """Handle incoming webhook POST requests"""
+        print("=" * 80)
+        print("POST request received")
+        print(f"Path: {self.path}")
+        print(f"Headers: {dict(self.headers)}")
+        
         try:
             # Read the request body
             content_length = int(self.headers.get('Content-Length', 0))
+            print(f"Content-Length: {content_length}")
+            
             body = self.rfile.read(content_length)
+            body_str = body.decode('utf-8')
+            print(f"Raw body: {body_str}")
             
             # Parse JSON payload
-            payload = json.loads(body.decode('utf-8'))
+            payload = json.loads(body_str)
+            print(f"Parsed payload: {json.dumps(payload, indent=2)}")
             
             # Determine webhook type and route to handler
             webhook_type = payload.get('type', 'unknown')
+            print(f"Webhook type: {webhook_type}")
             
             if webhook_type == 'v2.canvas.created':
+                print("Routing to handle_canvas_created")
                 response_data = self.handle_canvas_created(payload)
             elif webhook_type == 'v2.canvas.userInteracted':
+                print("Routing to handle_user_interaction")
                 response_data = self.handle_user_interaction(payload)
             else:
+                print(f"Unknown webhook type: {webhook_type}")
                 response_data = {'status': 'error', 'message': f'Unknown webhook type: {webhook_type}'}
+            
+            print(f"Response: {json.dumps(response_data, indent=2)}")
+            print("=" * 80)
             
             # Send successful response
             self.send_response(200)
@@ -52,12 +69,24 @@ class handler(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps(response_data).encode('utf-8'))
             
         except json.JSONDecodeError as e:
+            print(f"JSON Decode Error: {str(e)}")
+            print("=" * 80)
             self.send_error_response(400, f'Invalid JSON: {str(e)}')
         except Exception as e:
+            print(f"Exception occurred: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            print("=" * 80)
             self.send_error_response(500, f'Server error: {str(e)}')
     
     def do_GET(self):
         """Health check endpoint"""
+        print("=" * 80)
+        print("GET request received")
+        print(f"Path: {self.path}")
+        print(f"Headers: {dict(self.headers)}")
+        print("=" * 80)
+        
         self.send_response(200)
         self.send_header('Content-Type', 'application/json')
         self.end_headers()
@@ -70,6 +99,12 @@ class handler(BaseHTTPRequestHandler):
     
     def do_OPTIONS(self):
         """Handle CORS preflight requests"""
+        print("=" * 80)
+        print("OPTIONS request received")
+        print(f"Path: {self.path}")
+        print(f"Headers: {dict(self.headers)}")
+        print("=" * 80)
+        
         self.send_response(200)
         self.send_header('Access-Control-Allow-Origin', '*')
         self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
