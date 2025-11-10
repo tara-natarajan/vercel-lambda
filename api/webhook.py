@@ -5,22 +5,42 @@ Uses BaseHTTPRequestHandler as per Vercel Python runtime documentation.
 from http.server import BaseHTTPRequestHandler
 import json
 from datetime import datetime
-import pytz
 
-from benchling_sdk.models.webhooks.v0 import CanvasCreatedWebhookV2, CanvasInteractionWebhookV2
+# Try to import dependencies with error handling
+try:
+    import pytz
+    PYTZ_AVAILABLE = True
+except ImportError:
+    print("Warning: pytz not available")
+    PYTZ_AVAILABLE = False
+
+try:
+    from benchling_sdk.models.webhooks.v0 import CanvasCreatedWebhookV2, CanvasInteractionWebhookV2
+    BENCHLING_SDK_AVAILABLE = True
+except ImportError as e:
+    print(f"Warning: benchling_sdk not available: {e}")
+    BENCHLING_SDK_AVAILABLE = False
 
 # Import helper modules
-from benchling_client import get_benchling_client
-from canvas_blocks import (
-    ADD_BUTTON_ID,
-    REMOVE_BUTTON_ID,
-    SUBMIT_BUTTON_ID,
-    get_initial_canvas_blocks,
-    create_success_section,
-    create_error_section,
-    create_submit_success_section,
-)
-from canvas_updater import update_canvas
+try:
+    from benchling_client import get_benchling_client
+    from canvas_blocks import (
+        ADD_BUTTON_ID,
+        REMOVE_BUTTON_ID,
+        SUBMIT_BUTTON_ID,
+        get_initial_canvas_blocks,
+        create_success_section,
+        create_error_section,
+        create_submit_success_section,
+    )
+    from canvas_updater import update_canvas
+    HELPERS_AVAILABLE = True
+except ImportError as e:
+    print(f"Warning: helper modules not available: {e}")
+    HELPERS_AVAILABLE = False
+    ADD_BUTTON_ID = "add_item"
+    REMOVE_BUTTON_ID = "remove_item"
+    SUBMIT_BUTTON_ID = "submit"
 
 
 class handler(BaseHTTPRequestHandler):
@@ -31,6 +51,11 @@ class handler(BaseHTTPRequestHandler):
         print("POST request received")
         print(f"Path: {self.path}")
         print(f"Headers: {dict(self.headers)}")
+        
+        # Check if dependencies are available
+        if not HELPERS_AVAILABLE:
+            self.send_error_response(500, 'Helper modules not available - check dependencies')
+            return
         
         try:
             # Read the request body
@@ -81,21 +106,43 @@ class handler(BaseHTTPRequestHandler):
     
     def do_GET(self):
         """Health check endpoint"""
-        print("=" * 80)
-        print("GET request received")
-        print(f"Path: {self.path}")
-        print(f"Headers: {dict(self.headers)}")
-        print("=" * 80)
-        
-        self.send_response(200)
-        self.send_header('Content-Type', 'application/json')
-        self.end_headers()
-        response = {
-            'status': 'ok',
-            'message': 'Webhook handler is running',
-            'timestamp': datetime.now(pytz.UTC).isoformat()
-        }
-        self.wfile.write(json.dumps(response).encode('utf-8'))
+        try:
+            print("=" * 80)
+            print("GET request received")
+            print(f"Path: {self.path}")
+            print(f"Headers: {dict(self.headers)}")
+            
+            # Check import status
+            print(f"PYTZ_AVAILABLE: {PYTZ_AVAILABLE}")
+            print(f"BENCHLING_SDK_AVAILABLE: {BENCHLING_SDK_AVAILABLE}")
+            print(f"HELPERS_AVAILABLE: {HELPERS_AVAILABLE}")
+            print("=" * 80)
+            
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+            
+            if PYTZ_AVAILABLE:
+                timestamp = datetime.now(pytz.UTC).isoformat()
+            else:
+                timestamp = datetime.utcnow().isoformat()
+            
+            response = {
+                'status': 'ok',
+                'message': 'Webhook handler is running',
+                'timestamp': timestamp,
+                'dependencies': {
+                    'pytz': PYTZ_AVAILABLE,
+                    'benchling_sdk': BENCHLING_SDK_AVAILABLE,
+                    'helpers': HELPERS_AVAILABLE
+                }
+            }
+            self.wfile.write(json.dumps(response).encode('utf-8'))
+        except Exception as e:
+            print(f"Error in do_GET: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            self.send_error_response(500, f'GET error: {str(e)}')
     
     def do_OPTIONS(self):
         """Handle CORS preflight requests"""
