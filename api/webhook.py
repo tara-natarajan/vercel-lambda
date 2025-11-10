@@ -1,96 +1,23 @@
+"""Benchling Canvas webhook handler for Vercel."""
 from http.server import BaseHTTPRequestHandler
 import json
-import os
 from datetime import datetime
-from typing import List, Optional
 import pytz
 
-from benchling_sdk.benchling import Benchling
-from benchling_sdk.auth.client_credentials_oauth2 import ClientCredentialsOAuth2
-from benchling_sdk.apps.canvas.framework import CanvasBuilder
 from benchling_sdk.models.webhooks.v0 import CanvasCreatedWebhookV2, CanvasInteractionWebhookV2
-from benchling_sdk.models import (
-    AppCanvasCreate,
-    AppCanvasUpdate,
-    ButtonUiBlock,
-    ButtonUiBlockType,
-    DropdownUiBlock,
-    DropdownUiBlockType,
-    MarkdownUiBlock,
-    MarkdownUiBlockType,
-    SectionUiBlock,
-    SectionUiBlockType,
-    TextInputUiBlock,
-    TextInputUiBlockType,
+
+# Import helper modules
+from benchling_client import get_benchling_client
+from canvas_blocks import (
+    ADD_BUTTON_ID,
+    REMOVE_BUTTON_ID,
+    SUBMIT_BUTTON_ID,
+    get_initial_canvas_blocks,
+    create_success_section,
+    create_error_section,
+    create_submit_success_section,
 )
-
-# Constants
-CANVAS_HEADER_SECTION = "canvas_header_section"
-ADD_BUTTON_ID = "add_item"
-REMOVE_BUTTON_ID = "remove_item"
-SUBMIT_BUTTON_ID = "submit"
-
-INSTRUCTIONS = """
-Welcome to the Vercel Lambda Canvas!\n
-Add or remove items using the buttons below, then click submit when ready.\n
-"""
-
-
-def get_benchling_client() -> Benchling:
-    """Initialize and return Benchling client"""
-    base_url = os.environ.get('BENCHLING_URL', 'https://your-tenant.benchling.com')
-    client_id = os.environ.get('BENCHLING_CLIENT_ID')
-    client_secret = os.environ.get('BENCHLING_CLIENT_SECRET')
-    
-    if not client_id or not client_secret:
-        raise ValueError("BENCHLING_CLIENT_ID and BENCHLING_CLIENT_SECRET must be set in environment variables")
-    
-    token_url = f"{base_url}/api/v2/token"
-    
-    return Benchling(
-        url=base_url,
-        auth_method=ClientCredentialsOAuth2(client_id, client_secret, token_url),
-    )
-
-
-def get_initial_canvas_blocks(num_plates: int = 1) -> SectionUiBlock:
-    """Generate initial canvas UI blocks"""
-    return SectionUiBlock(
-        type=SectionUiBlockType.SECTION,
-        id=CANVAS_HEADER_SECTION,
-        children=[
-            MarkdownUiBlock(
-                type=MarkdownUiBlockType.MARKDOWN,
-                id="instructions",
-                value=INSTRUCTIONS
-            ),
-            TextInputUiBlock(
-                type=TextInputUiBlockType.TEXT_INPUT,
-                id="plates_input",
-                label=f"Number of Plates (configured: {num_plates})",
-                enabled=True,
-                value=str(num_plates),
-            ),
-            ButtonUiBlock(
-                type=ButtonUiBlockType.BUTTON,
-                id=ADD_BUTTON_ID,
-                label="Add Item",
-                enabled=True,
-            ),
-            ButtonUiBlock(
-                type=ButtonUiBlockType.BUTTON,
-                id=REMOVE_BUTTON_ID,
-                label="Remove Item",
-                enabled=True,
-            ),
-            ButtonUiBlock(
-                type=ButtonUiBlockType.BUTTON,
-                id=SUBMIT_BUTTON_ID,
-                label="Submit",
-                enabled=True,
-            ),
-        ],
-    )
+from canvas_updater import update_canvas
 
 
 class handler(BaseHTTPRequestHandler):
@@ -152,18 +79,13 @@ class handler(BaseHTTPRequestHandler):
             config = payload.get('configuration', {})
             num_plates = int(config.get('Number of Plates', 1))
             
-            # Initialize Benchling client
-            benchling = get_benchling_client()
-            
-            # Build canvas using CanvasBuilder
-            canvas_builder = CanvasBuilder(app_id, feature_id)
-            canvas_builder.blocks.append(get_initial_canvas_blocks(num_plates))
-            
-            # Create canvas update from builder
-            canvas_update = canvas_builder.to_update()
-            
-            # Update canvas in Benchling
-            benchling.apps.update_canvas(canvas_id=canvas_id, canvas=canvas_update)
+            # Update canvas with initial blocks
+            update_canvas(
+                canvas_id=canvas_id,
+                app_id=app_id,
+                feature_id=feature_id,
+                blocks=[get_initial_canvas_blocks(num_plates)]
+            )
             
             print(f"Canvas {canvas_id} created successfully")
             
@@ -205,31 +127,16 @@ class handler(BaseHTTPRequestHandler):
             # TODO: Add your logic for adding items
             # For now, just refresh the canvas with current state
             
-            # Initialize Benchling client
-            benchling = get_benchling_client()
-            
-            # Build updated canvas
-            canvas_builder = CanvasBuilder(app_id, feature_id)
-            canvas_builder.blocks.append(get_initial_canvas_blocks())
-            
-            # Add success message
-            canvas_builder.blocks.append(
-                SectionUiBlock(
-                    type=SectionUiBlockType.SECTION,
-                    id="add_item_success",
-                    children=[
-                        MarkdownUiBlock(
-                            type=MarkdownUiBlockType.MARKDOWN,
-                            id="add_message",
-                            value="✅ Item added successfully!"
-                        ),
-                    ],
-                )
+            # Update canvas with initial blocks and success message
+            update_canvas(
+                canvas_id=canvas_id,
+                app_id=app_id,
+                feature_id=feature_id,
+                blocks=[
+                    get_initial_canvas_blocks(),
+                    create_success_section("add_item_success", "Item added successfully!")
+                ]
             )
-            
-            # Update canvas
-            canvas_update = canvas_builder.to_update()
-            benchling.apps.update_canvas(canvas_id=canvas_id, canvas=canvas_update)
             
             return {
                 'status': 'success',
@@ -246,31 +153,16 @@ class handler(BaseHTTPRequestHandler):
         try:
             # TODO: Add your logic for removing items
             
-            # Initialize Benchling client
-            benchling = get_benchling_client()
-            
-            # Build updated canvas
-            canvas_builder = CanvasBuilder(app_id, feature_id)
-            canvas_builder.blocks.append(get_initial_canvas_blocks())
-            
-            # Add success message
-            canvas_builder.blocks.append(
-                SectionUiBlock(
-                    type=SectionUiBlockType.SECTION,
-                    id="remove_item_success",
-                    children=[
-                        MarkdownUiBlock(
-                            type=MarkdownUiBlockType.MARKDOWN,
-                            id="remove_message",
-                            value="✅ Item removed successfully!"
-                        ),
-                    ],
-                )
+            # Update canvas with initial blocks and success message
+            update_canvas(
+                canvas_id=canvas_id,
+                app_id=app_id,
+                feature_id=feature_id,
+                blocks=[
+                    get_initial_canvas_blocks(),
+                    create_success_section("remove_item_success", "Item removed successfully!")
+                ]
             )
-            
-            # Update canvas
-            canvas_update = canvas_builder.to_update()
-            benchling.apps.update_canvas(canvas_id=canvas_id, canvas=canvas_update)
             
             return {
                 'status': 'success',
@@ -288,34 +180,13 @@ class handler(BaseHTTPRequestHandler):
             # TODO: Add your submit logic here
             # Extract form data, process it, etc.
             
-            # Initialize Benchling client
-            benchling = get_benchling_client()
-            
-            # Build success canvas
-            canvas_builder = CanvasBuilder(app_id, feature_id)
-            canvas_builder.blocks.append(
-                SectionUiBlock(
-                    type=SectionUiBlockType.SECTION,
-                    id="success_section",
-                    children=[
-                        MarkdownUiBlock(
-                            type=MarkdownUiBlockType.MARKDOWN,
-                            id="success_message",
-                            value="✅ **Submitted successfully!**\n\nYour data has been processed."
-                        ),
-                        ButtonUiBlock(
-                            type=ButtonUiBlockType.BUTTON,
-                            id="reset_button",
-                            label="Start Over",
-                            enabled=True,
-                        ),
-                    ],
-                )
+            # Update canvas with success message
+            update_canvas(
+                canvas_id=canvas_id,
+                app_id=app_id,
+                feature_id=feature_id,
+                blocks=[create_submit_success_section()]
             )
-            
-            # Update canvas
-            canvas_update = canvas_builder.to_update()
-            benchling.apps.update_canvas(canvas_id=canvas_id, canvas=canvas_update)
             
             return {
                 'status': 'success',
@@ -328,25 +199,12 @@ class handler(BaseHTTPRequestHandler):
     def update_canvas_with_error(self, canvas_id: str, app_id: str, feature_id: str, message: str):
         """Update canvas with error message"""
         try:
-            benchling = get_benchling_client()
-            
-            canvas_builder = CanvasBuilder(app_id, feature_id)
-            canvas_builder.blocks.append(
-                SectionUiBlock(
-                    type=SectionUiBlockType.SECTION,
-                    id="error_section",
-                    children=[
-                        MarkdownUiBlock(
-                            type=MarkdownUiBlockType.MARKDOWN,
-                            id="error_message",
-                            value=f"❌ **Error**\n\n{message}"
-                        ),
-                    ],
-                )
+            update_canvas(
+                canvas_id=canvas_id,
+                app_id=app_id,
+                feature_id=feature_id,
+                blocks=[create_error_section("error_section", message)]
             )
-            
-            canvas_update = canvas_builder.to_update()
-            benchling.apps.update_canvas(canvas_id=canvas_id, canvas=canvas_update)
             
             return {
                 'status': 'error',

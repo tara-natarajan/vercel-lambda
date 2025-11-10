@@ -4,23 +4,29 @@ This is a [Next.js](https://nextjs.org) project with a Python webhook handler fo
 
 ```
 vercel-lambda/
-├── app/                 # Next.js frontend application
-├── api/                 # Python webhook handlers
-│   ├── webhook.py      # Main webhook handler
-│   └── requirements.txt # Python dependencies
-├── manifest.yaml        # Benchling app manifest
-└── vercel.json         # Vercel deployment config
+├── app/                    # Next.js frontend application
+├── api/                    # Python webhook handlers
+│   ├── webhook.py         # Main webhook handler
+│   ├── benchling_client.py # Benchling client initialization
+│   ├── canvas_blocks.py   # UI block builders and constants
+│   ├── canvas_updater.py  # Canvas update utilities
+│   ├── requirements.txt   # Python dependencies
+│   └── runtime.txt        # Python version specification
+├── manifest.yaml           # Benchling app manifest
+└── vercel.json            # Vercel deployment config
 ```
 
 ## Environment Variables
 
-Before deploying, set up the following environment variables in Vercel:
+Before deploying, set up the following **required** environment variables in Vercel:
 
 ```bash
 BENCHLING_URL=https://your-tenant.benchling.com
 BENCHLING_CLIENT_ID=your_client_id_here
 BENCHLING_CLIENT_SECRET=your_client_secret_here
 ```
+
+**Note:** All three variables are required. The application will fail to start if any are missing.
 
 ### Setting Environment Variables in Vercel
 
@@ -84,10 +90,27 @@ https://your-app.vercel.app/api/webhook
 
 ### Customization
 
-Edit the TODO sections in `api/webhook.py`:
-- `handle_add_item()` - Add your item creation logic
-- `handle_remove_item()` - Add your item removal logic
-- `handle_submit()` - Add your submission/processing logic
+The codebase is organized into reusable modules:
+
+**`api/webhook.py`** - Main webhook handler
+- Edit TODO sections in handler methods:
+  - `handle_add_item()` - Add your item creation logic
+  - `handle_remove_item()` - Add your item removal logic
+  - `handle_submit()` - Add your submission/processing logic
+
+**`api/benchling_client.py`** - Client initialization
+- Manages OAuth2 authentication
+- Reads credentials from environment variables
+
+**`api/canvas_blocks.py`** - UI block builders
+- `get_initial_canvas_blocks()` - Initial canvas layout
+- `create_success_section()` - Success message blocks
+- `create_error_section()` - Error message blocks
+- Customize button IDs and labels here
+
+**`api/canvas_updater.py`** - Canvas update utilities
+- `update_canvas()` - Updates canvas with new blocks
+- Uses CanvasBuilder pattern
 
 ## Deploy on Vercel
 
