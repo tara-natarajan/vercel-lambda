@@ -1,8 +1,37 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+This is a [Next.js](https://nextjs.org) project with a Python webhook handler for Benchling Canvas integrations.
+
+## Project Structure
+
+```
+vercel-lambda/
+├── app/                 # Next.js frontend application
+├── api/                 # Python webhook handlers
+│   ├── webhook.py      # Main webhook handler
+│   └── requirements.txt # Python dependencies
+├── manifest.yaml        # Benchling app manifest
+└── vercel.json         # Vercel deployment config
+```
+
+## Environment Variables
+
+Before deploying, set up the following environment variables in Vercel:
+
+```bash
+BENCHLING_URL=https://your-tenant.benchling.com
+BENCHLING_CLIENT_ID=your_client_id_here
+BENCHLING_CLIENT_SECRET=your_client_secret_here
+```
+
+### Setting Environment Variables in Vercel
+
+1. Go to your project settings in Vercel
+2. Navigate to "Environment Variables"
+3. Add each variable for Production, Preview, and Development environments
+4. Get credentials from your Benchling App Configuration page
 
 ## Getting Started
 
-First, run the development server:
+First, install dependencies:
 
 ```bash
 npm run dev
@@ -29,8 +58,51 @@ To learn more about Next.js, take a look at the following resources:
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
+## Webhook Handler
+
+The Python webhook handler (`api/webhook.py`) processes Benchling Canvas events:
+
+### Supported Events
+
+- **v2.canvas.created**: Initializes a new canvas with UI blocks
+- **v2.canvas.userInteracted**: Handles button clicks and user interactions
+
+### Webhook URL
+
+After deployment, configure your Benchling app to send webhooks to:
+```
+https://your-app.vercel.app/api/webhook
+```
+
+### Handler Features
+
+- Uses Benchling SDK with `CanvasBuilder`
+- OAuth2 client credentials authentication
+- Dynamic canvas updates with section UI blocks
+- Button handlers: Add Item, Remove Item, Submit
+- Error handling and logging
+
+### Customization
+
+Edit the TODO sections in `api/webhook.py`:
+- `handle_add_item()` - Add your item creation logic
+- `handle_remove_item()` - Add your item removal logic
+- `handle_submit()` - Add your submission/processing logic
+
 ## Deploy on Vercel
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. Install Vercel CLI:
+   ```bash
+   npm i -g vercel
+   ```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+2. Deploy:
+   ```bash
+   vercel --prod
+   ```
+
+3. Set environment variables in Vercel dashboard
+
+4. Configure webhook URL in Benchling app settings
+
+Check out [Vercel deployment documentation](https://vercel.com/docs) for more details.
