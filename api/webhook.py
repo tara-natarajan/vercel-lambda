@@ -36,17 +36,17 @@ class handler(BaseHTTPRequestHandler):
             webhook_type = payload.get('type', 'unknown')
             
             if webhook_type == 'v2.canvas.created':
-                response = self.handle_canvas_created(payload)
+                response_data = self.handle_canvas_created(payload)
             elif webhook_type == 'v2.canvas.userInteracted':
-                response = self.handle_user_interaction(payload)
+                response_data = self.handle_user_interaction(payload)
             else:
-                response = self.create_error_response(f'Unknown webhook type: {webhook_type}')
+                response_data = {'status': 'error', 'message': f'Unknown webhook type: {webhook_type}'}
             
             # Send successful response
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')
             self.end_headers()
-            self.wfile.write(json.dumps(response).encode('utf-8'))
+            self.wfile.write(json.dumps(response_data).encode('utf-8'))
             
         except json.JSONDecodeError as e:
             self.send_error_response(400, f'Invalid JSON: {str(e)}')
@@ -64,6 +64,14 @@ class handler(BaseHTTPRequestHandler):
             'timestamp': datetime.now(pytz.UTC).isoformat()
         }
         self.wfile.write(json.dumps(response).encode('utf-8'))
+    
+    def do_OPTIONS(self):
+        """Handle CORS preflight requests"""
+        self.send_response(200)
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+        self.end_headers()
     
     def handle_canvas_created(self, payload):
         """Handle canvas.created webhook event"""
@@ -221,10 +229,15 @@ class handler(BaseHTTPRequestHandler):
         """Send HTTP error response"""
         self.send_response(status_code)
         self.send_header('Content-Type', 'application/json')
+        self.send_header('Access-Control-Allow-Origin', '*')
         self.end_headers()
         error_response = {
             'status': 'error',
             'message': message
         }
         self.wfile.write(json.dumps(error_response).encode('utf-8'))
+    
+    def log_message(self, format, *args):
+        """Override to customize logging"""
+        print(f"{self.address_string()} - {format % args}")
 
