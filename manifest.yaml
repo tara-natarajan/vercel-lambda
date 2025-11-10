@@ -1,0 +1,22 @@
+manifestVersion: 1  # Should not be edited
+
+info:
+  name: "Vercel Backed Lambda"
+  version: 0.0.1
+  description: "Lambda handler from vercel"
+subscriptions:
+  deliveryMethod: WEBHOOK
+  messages:
+    - type: v2.canvas.created
+    - type: v2.canvas.userInteracted
+
+features:
+  - name: Vercel Backed lambda
+    id: add_one_canvas
+    type: CANVAS
+
+configuration:
+  - name: Number of Plates
+    type: text
+    requiredConfig: true
+    description: "The number of plates available"
