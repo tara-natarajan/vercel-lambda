@@ -157,7 +157,7 @@ def create_submit_success_section():
 
 def update_canvas(canvas_id: str, app_id: str, feature_id: str, blocks):
     """Update a canvas with new UI blocks."""
-    from benchling_sdk.apps.types import AppCanvasUpdate
+    from benchling_api_client.v2.stable.models import AppCanvasUpdate
     
     print(f"update_canvas called with canvas_id={canvas_id}, app_id={app_id}, feature_id={feature_id}")
     print(f"Number of blocks: {len(blocks)}")
