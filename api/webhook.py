@@ -58,17 +58,13 @@ def get_benchling_client():
     )
 
 
-def get_initial_canvas_blocks(num_plates: int = 1):
-    """Generate initial canvas UI blocks."""
+def get_initial_canvas_blocks(num_plates: str = "1"):
+    """Generate initial canvas UI blocks showing Number of Plates."""
     from benchling_sdk.models import (
-        ButtonUiBlock,
-        ButtonUiBlockType,
         MarkdownUiBlock,
         MarkdownUiBlockType,
         SectionUiBlock,
         SectionUiBlockType,
-        TextInputUiBlock,
-        TextInputUiBlockType,
     )
     
     return SectionUiBlock(
@@ -77,33 +73,8 @@ def get_initial_canvas_blocks(num_plates: int = 1):
         children=[
             MarkdownUiBlock(
                 type=MarkdownUiBlockType.MARKDOWN,
-                id="instructions",
-                value=INSTRUCTIONS
-            ),
-            TextInputUiBlock(
-                type=TextInputUiBlockType.TEXT_INPUT,
-                id="plates_input",
-                label=f"Number of Plates (configured: {num_plates})",
-                enabled=True,
-                value=str(num_plates),
-            ),
-            ButtonUiBlock(
-                type=ButtonUiBlockType.BUTTON,
-                id=ADD_BUTTON_ID,
-                text="Add Item",
-                enabled=True,
-            ),
-            ButtonUiBlock(
-                type=ButtonUiBlockType.BUTTON,
-                id=REMOVE_BUTTON_ID,
-                text="Remove Item",
-                enabled=True,
-            ),
-            ButtonUiBlock(
-                type=ButtonUiBlockType.BUTTON,
-                id=SUBMIT_BUTTON_ID,
-                text="Submit",
-                enabled=True,
+                id="plates_display",
+                value=f"**Number of Plates:** {num_plates}"
             ),
         ],
     )
@@ -309,7 +280,7 @@ class handler(BaseHTTPRequestHandler):
         self.end_headers()
     
     def handle_canvas_created(self, payload):
-        """Handle canvas.created webhook event"""
+        """Handle canvas.created webhook event - simply display Number of Plates"""
         # Extract canvas data
         canvas_id = payload.get('canvas', {}).get('id')
         feature_id = payload.get('feature', {}).get('id')
@@ -320,25 +291,12 @@ class handler(BaseHTTPRequestHandler):
         try:
             # Get configuration for number of plates
             config = payload.get('configuration', {})
-            num_plates = int(config.get('Number of Plates', 1))
+            num_plates = config.get('Number of Plates', '1')
             
-            print(f"Config extracted: {num_plates} plates")
+            print(f"Number of Plates from config: {num_plates}")
             
-            # Check if we should skip Benchling API call (for testing)
-            import os
-            test_mode = os.environ.get('TEST_MODE', 'false').lower() == 'true'
-            
-            if test_mode:
-                print("TEST_MODE enabled - skipping Benchling API call")
-                return {
-                    'status': 'success',
-                    'canvas_id': canvas_id,
-                    'message': 'Canvas created successfully (TEST MODE - no API call made)',
-                    'num_plates': num_plates
-                }
-            
-            # Update canvas with initial blocks
-            print("Calling update_canvas...")
+            # Update canvas with simple display block
+            print("Updating canvas with standard blocks...")
             update_canvas(
                 canvas_id=canvas_id,
                 app_id=app_id,
@@ -346,22 +304,24 @@ class handler(BaseHTTPRequestHandler):
                 blocks=[get_initial_canvas_blocks(num_plates)]
             )
             
-            print(f"Canvas {canvas_id} created successfully")
+            print(f"Canvas {canvas_id} updated successfully")
             
             return {
                 'status': 'success',
                 'canvas_id': canvas_id,
-                'message': 'Canvas created successfully'
+                'message': 'Canvas created successfully',
+                'num_plates': num_plates
             }
         except Exception as e:
-            print(f"Error creating canvas: {str(e)}")
+            error_msg = str(e) if str(e) else f'{type(e).__name__}: {repr(e)}'
+            print(f"Error creating canvas: {error_msg}")
             print(f"Error type: {type(e).__name__}")
             import traceback
             traceback.print_exc()
             raise
     
     def handle_user_interaction(self, payload):
-        """Handle canvas.userInteracted webhook event"""
+        """Handle canvas.userInteracted webhook event - just return standard blocks"""
         # Extract interaction data
         canvas_id = payload.get('canvas', {}).get('id')
         user_id = payload.get('user', {}).get('id')
@@ -370,16 +330,30 @@ class handler(BaseHTTPRequestHandler):
         feature_id = payload.get('feature', {}).get('id')
         
         print(f"Canvas interaction - Canvas: {canvas_id}, User: {user_id}, Button: {button_id}")
+        print("Note: User interactions not implemented - returning standard blocks")
         
-        # Handle different button interactions
-        if button_id == ADD_BUTTON_ID:
-            return self.handle_add_item(canvas_id, app_id, feature_id, payload)
-        elif button_id == REMOVE_BUTTON_ID:
-            return self.handle_remove_item(canvas_id, app_id, feature_id, payload)
-        elif button_id == SUBMIT_BUTTON_ID:
-            return self.handle_submit(canvas_id, app_id, feature_id, payload)
-        else:
-            return self.update_canvas_with_error(canvas_id, app_id, feature_id, f'Unknown button ID: {button_id}')
+        # Get configuration
+        config = payload.get('configuration', {})
+        num_plates = config.get('Number of Plates', '1')
+        
+        # Just return the same standard blocks
+        try:
+            update_canvas(
+                canvas_id=canvas_id,
+                app_id=app_id,
+                feature_id=feature_id,
+                blocks=[get_initial_canvas_blocks(num_plates)]
+            )
+            
+            return {
+                'status': 'success',
+                'message': 'Interaction received',
+                'button_id': button_id
+            }
+        except Exception as e:
+            error_msg = str(e) if str(e) else f'{type(e).__name__}: {repr(e)}'
+            print(f"Error handling interaction: {error_msg}")
+            raise
     
     def handle_add_item(self, canvas_id: str, app_id: str, feature_id: str, payload: dict):
         """Handle add item button click"""
