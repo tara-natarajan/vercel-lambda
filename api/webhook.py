@@ -247,11 +247,12 @@ class handler(BaseHTTPRequestHandler):
             print("=" * 80)
             self.send_error_response(400, f'Invalid JSON: {str(e)}')
         except Exception as e:
-            print(f"Exception occurred: {str(e)}")
+            error_msg = str(e) if str(e) else f'{type(e).__name__}: {repr(e)}'
+            print(f"Exception occurred: {error_msg}")
             import traceback
             traceback.print_exc()
             print("=" * 80)
-            self.send_error_response(500, f'Server error: {str(e)}')
+            self.send_error_response(500, f'Server error: {error_msg}')
     
     def do_GET(self):
         """Health check endpoint"""
