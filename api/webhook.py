@@ -319,23 +319,7 @@ class handler(BaseHTTPRequestHandler):
             
             print(f"Number of Plates from config: {num_plates}")
             
-            # Check for ENABLE_BENCHLING_API environment variable
-            # By default, we skip the Benchling API call unless explicitly enabled
-            enable_api = os.environ.get('ENABLE_BENCHLING_API', 'false').lower() == 'true'
-            
-            if not enable_api:
-                print("ENABLE_BENCHLING_API not set to true - Skipping Benchling API call")
-                print("To enable Benchling API calls, set ENABLE_BENCHLING_API=true in Vercel environment variables")
-                return {
-                    'status': 'success',
-                    'canvas_id': canvas_id,
-                    'message': 'Webhook received successfully (Benchling API disabled)',
-                    'num_plates': num_plates,
-                    'note': 'Set ENABLE_BENCHLING_API=true to call Benchling API'
-                }
-            
             # Update canvas with simple display block
-            print("ENABLE_BENCHLING_API=true - Calling Benchling API...")
             print("Updating canvas with standard blocks...")
             update_canvas(
                 canvas_id=canvas_id,
@@ -379,22 +363,9 @@ class handler(BaseHTTPRequestHandler):
         
         print(f"Number of Plates from config: {num_plates}")
         
-        # Check for ENABLE_BENCHLING_API environment variable
-        enable_api = os.environ.get('ENABLE_BENCHLING_API', 'false').lower() == 'true'
-        
-        if not enable_api:
-            print("ENABLE_BENCHLING_API not set to true - Skipping Benchling API call")
-            return {
-                'status': 'success',
-                'message': 'User interaction received (Benchling API disabled)',
-                'button_id': button_id,
-                'num_plates': num_plates,
-                'note': 'Set ENABLE_BENCHLING_API=true to call Benchling API'
-            }
-        
-        # Just return the same standard blocks
+        # Update canvas with standard blocks
         try:
-            print("ENABLE_BENCHLING_API=true - Calling Benchling API...")
+            print("Updating canvas with standard blocks...")
             update_canvas(
                 canvas_id=canvas_id,
                 app_id=app_id,
