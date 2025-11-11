@@ -22,7 +22,7 @@ class TestGetInitialCanvasBlocks:
         result = get_initial_canvas_blocks(num_plates="5")
         
         assert result.id == CANVAS_HEADER_SECTION
-        assert result.type.value == "section"
+        assert result.type.value == "SECTION"
     
     def test_displays_number_of_plates(self):
         """Test that Number of Plates value is displayed in markdown."""
@@ -32,7 +32,7 @@ class TestGetInitialCanvasBlocks:
         assert len(result.children) == 1
         markdown_block = result.children[0]
         
-        assert markdown_block.type.value == "markdown"
+        assert markdown_block.type.value == "MARKDOWN"
         assert "7" in markdown_block.value
         assert "Number of Plates" in markdown_block.value
     
