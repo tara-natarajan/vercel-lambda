@@ -90,19 +90,19 @@ def get_initial_canvas_blocks(num_plates: int = 1):
             ButtonUiBlock(
                 type=ButtonUiBlockType.BUTTON,
                 id=ADD_BUTTON_ID,
-                label="Add Item",
+                text="Add Item",
                 enabled=True,
             ),
             ButtonUiBlock(
                 type=ButtonUiBlockType.BUTTON,
                 id=REMOVE_BUTTON_ID,
-                label="Remove Item",
+                text="Remove Item",
                 enabled=True,
             ),
             ButtonUiBlock(
                 type=ButtonUiBlockType.BUTTON,
                 id=SUBMIT_BUTTON_ID,
-                label="Submit",
+                text="Submit",
                 enabled=True,
             ),
         ],
@@ -176,7 +176,7 @@ def create_submit_success_section():
             ButtonUiBlock(
                 type=ButtonUiBlockType.BUTTON,
                 id="reset_button",
-                label="Start Over",
+                text="Start Over",
                 enabled=True,
             ),
         ],
