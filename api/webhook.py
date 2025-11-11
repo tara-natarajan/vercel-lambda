@@ -158,14 +158,36 @@ def update_canvas(canvas_id: str, app_id: str, feature_id: str, blocks):
     """Update a canvas with new UI blocks."""
     from benchling_sdk.apps.canvas.framework import CanvasBuilder
     
-    benchling = get_benchling_client()
+    print(f"update_canvas called with canvas_id={canvas_id}, app_id={app_id}, feature_id={feature_id}")
+    print(f"Number of blocks: {len(blocks)}")
     
-    canvas_builder = CanvasBuilder(app_id, feature_id)
-    for block in blocks:
-        canvas_builder.blocks.append(block)
-    
-    canvas_update = canvas_builder.to_update()
-    benchling.apps.update_canvas(canvas_id=canvas_id, canvas=canvas_update)
+    try:
+        print("Getting Benchling client...")
+        benchling = get_benchling_client()
+        print("✓ Benchling client created")
+        
+        print("Building canvas...")
+        canvas_builder = CanvasBuilder(app_id, feature_id)
+        for i, block in enumerate(blocks):
+            print(f"Appending block {i}: {type(block).__name__}")
+            canvas_builder.blocks.append(block)
+        print("✓ Canvas built")
+        
+        print("Converting to update...")
+        canvas_update = canvas_builder.to_update()
+        print(f"✓ Canvas update created: {type(canvas_update)}")
+        
+        print(f"Calling Benchling API to update canvas {canvas_id}...")
+        result = benchling.apps.update_canvas(canvas_id=canvas_id, canvas=canvas_update)
+        print(f"✓ Canvas updated successfully: {result}")
+        
+    except Exception as e:
+        print(f"ERROR in update_canvas: {type(e).__name__}")
+        print(f"Error message: {str(e)}")
+        print(f"Error repr: {repr(e)}")
+        import traceback
+        traceback.print_exc()
+        raise
 
 
 class handler(BaseHTTPRequestHandler):
