@@ -1,5 +1,6 @@
-"""Benchling Canvas webhook handler for Vercel.
+"""Benchling Canvas handler for Vercel.
 
+Handles Benchling Canvas events sent via app signals.
 Uses BaseHTTPRequestHandler as per Vercel Python runtime documentation.
 """
 from http.server import BaseHTTPRequestHandler
@@ -212,8 +213,9 @@ class handler(BaseHTTPRequestHandler):
             payload = json.loads(body_str)
             print(f"Parsed payload: {json.dumps(payload, indent=2)}")
             
-            # Determine webhook type and route to handler
-            webhook_type = payload.get('type', 'unknown')
+            # Extract message from payload (new format)
+            message = payload.get('message', {})
+            webhook_type = message.get('type', payload.get('type', 'unknown'))
             print(f"Webhook type: {webhook_type}")
             
             if webhook_type == 'v2.canvas.created':
@@ -305,9 +307,10 @@ class handler(BaseHTTPRequestHandler):
         """Handle canvas.created webhook event - simply display Number of Plates"""
         import os
         
-        # Extract canvas data
-        canvas_id = payload.get('canvas', {}).get('id')
-        feature_id = payload.get('feature', {}).get('id')
+        # Extract canvas data - support both old and new format
+        message = payload.get('message', {})
+        canvas_id = message.get('canvasId') or payload.get('canvas', {}).get('id')
+        feature_id = message.get('featureId') or payload.get('feature', {}).get('id')
         app_id = payload.get('app', {}).get('id')
         
         print(f"Canvas initialized - ID: {canvas_id}, Feature: {feature_id}, App: {app_id}")
@@ -348,12 +351,13 @@ class handler(BaseHTTPRequestHandler):
         """Handle canvas.userInteracted webhook event - just return standard blocks"""
         import os
         
-        # Extract interaction data
-        canvas_id = payload.get('canvas', {}).get('id')
-        user_id = payload.get('user', {}).get('id')
-        button_id = payload.get('buttonId')
+        # Extract interaction data - support both old and new format
+        message = payload.get('message', {})
+        canvas_id = message.get('canvasId') or payload.get('canvas', {}).get('id')
+        user_id = message.get('userId') or payload.get('user', {}).get('id')
+        button_id = message.get('buttonId') or payload.get('buttonId')
         app_id = payload.get('app', {}).get('id')
-        feature_id = payload.get('feature', {}).get('id')
+        feature_id = message.get('featureId') or payload.get('feature', {}).get('id')
         
         print(f"Canvas interaction - Canvas: {canvas_id}, User: {user_id}, Button: {button_id}")
         
