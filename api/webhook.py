@@ -23,7 +23,11 @@ except ImportError as e:
 
 # Import helper modules
 try:
+    print("Attempting to import benchling_client...")
     from benchling_client import get_benchling_client
+    print("✓ benchling_client imported")
+    
+    print("Attempting to import canvas_blocks...")
     from canvas_blocks import (
         ADD_BUTTON_ID,
         REMOVE_BUTTON_ID,
@@ -33,10 +37,18 @@ try:
         create_error_section,
         create_submit_success_section,
     )
+    print("✓ canvas_blocks imported")
+    
+    print("Attempting to import canvas_updater...")
     from canvas_updater import update_canvas
+    print("✓ canvas_updater imported")
+    
     HELPERS_AVAILABLE = True
+    print("All helpers available!")
 except ImportError as e:
     print(f"Warning: helper modules not available: {e}")
+    import traceback
+    traceback.print_exc()
     HELPERS_AVAILABLE = False
     ADD_BUTTON_ID = "add_item"
     REMOVE_BUTTON_ID = "remove_item"
