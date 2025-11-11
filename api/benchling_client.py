@@ -3,9 +3,6 @@ import os
 
 
 def get_benchling_client():
-    """Get Benchling client with lazy imports."""
-    from benchling_sdk.benchling import Benchling
-    from benchling_sdk.auth.client_credentials_oauth2 import ClientCredentialsOAuth2
     """
     Initialize and return Benchling client with OAuth2 authentication.
     
@@ -20,6 +17,8 @@ def get_benchling_client():
     Raises:
         ValueError: If required environment variables are not set
     """
+    from benchling_sdk.benchling import Benchling
+    from benchling_sdk.auth.client_credentials_oauth2 import ClientCredentialsOAuth2
     base_url = os.environ.get('BENCHLING_URL')
     client_id = os.environ.get('BENCHLING_CLIENT_ID')
     client_secret = os.environ.get('BENCHLING_CLIENT_SECRET')
