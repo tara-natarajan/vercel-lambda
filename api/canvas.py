@@ -157,8 +157,6 @@ def create_submit_success_section():
 
 def update_canvas(canvas_id: str, app_id: str, feature_id: str, blocks):
     """Update a canvas with new UI blocks."""
-    from benchling_api_client.v2.stable.models import AppCanvasUpdate
-    
     print(f"update_canvas called with canvas_id={canvas_id}, app_id={app_id}, feature_id={feature_id}")
     print(f"Number of blocks: {len(blocks)}")
     
@@ -167,15 +165,13 @@ def update_canvas(canvas_id: str, app_id: str, feature_id: str, blocks):
         benchling = get_benchling_client()
         print("✓ Benchling client created")
         
-        print(f"Creating canvas update with {len(blocks)} blocks...")
+        print(f"Preparing {len(blocks)} blocks for update...")
         for i, block in enumerate(blocks):
             print(f"Block {i}: {type(block).__name__} with id={getattr(block, 'id', 'no-id')}")
         
-        # Create the update object directly with blocks
-        canvas_update = AppCanvasUpdate(
-            blocks=blocks
-        )
-        print(f"✓ Canvas update created: {type(canvas_update)}")
+        # Try passing blocks dict directly
+        canvas_update = {"blocks": blocks}
+        print(f"✓ Canvas update created as dict")
         
         print(f"Calling Benchling API to update canvas {canvas_id}...")
         result = benchling.apps.update_canvas(canvas_id=canvas_id, canvas=canvas_update)
