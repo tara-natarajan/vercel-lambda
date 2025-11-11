@@ -322,7 +322,23 @@ class handler(BaseHTTPRequestHandler):
             config = payload.get('configuration', {})
             num_plates = int(config.get('Number of Plates', 1))
             
+            print(f"Config extracted: {num_plates} plates")
+            
+            # Check if we should skip Benchling API call (for testing)
+            import os
+            test_mode = os.environ.get('TEST_MODE', 'false').lower() == 'true'
+            
+            if test_mode:
+                print("TEST_MODE enabled - skipping Benchling API call")
+                return {
+                    'status': 'success',
+                    'canvas_id': canvas_id,
+                    'message': 'Canvas created successfully (TEST MODE - no API call made)',
+                    'num_plates': num_plates
+                }
+            
             # Update canvas with initial blocks
+            print("Calling update_canvas...")
             update_canvas(
                 canvas_id=canvas_id,
                 app_id=app_id,
@@ -339,6 +355,9 @@ class handler(BaseHTTPRequestHandler):
             }
         except Exception as e:
             print(f"Error creating canvas: {str(e)}")
+            print(f"Error type: {type(e).__name__}")
+            import traceback
+            traceback.print_exc()
             raise
     
     def handle_user_interaction(self, payload):
