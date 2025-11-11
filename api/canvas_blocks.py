@@ -1,14 +1,4 @@
 """Canvas UI block builders and constants."""
-from benchling_sdk.models import (
-    ButtonUiBlock,
-    ButtonUiBlockType,
-    MarkdownUiBlock,
-    MarkdownUiBlockType,
-    SectionUiBlock,
-    SectionUiBlockType,
-    TextInputUiBlock,
-    TextInputUiBlockType,
-)
 
 # Constants
 CANVAS_HEADER_SECTION = "canvas_header_section"
@@ -22,7 +12,7 @@ Add or remove items using the buttons below, then click submit when ready.\n
 """
 
 
-def get_initial_canvas_blocks(num_plates: int = 1) -> SectionUiBlock:
+def get_initial_canvas_blocks(num_plates: int = 1):
     """
     Generate initial canvas UI blocks.
     
@@ -32,6 +22,17 @@ def get_initial_canvas_blocks(num_plates: int = 1) -> SectionUiBlock:
     Returns:
         SectionUiBlock: Initial canvas section with form inputs and buttons
     """
+    from benchling_sdk.models import (
+        ButtonUiBlock,
+        ButtonUiBlockType,
+        MarkdownUiBlock,
+        MarkdownUiBlockType,
+        SectionUiBlock,
+        SectionUiBlockType,
+        TextInputUiBlock,
+        TextInputUiBlockType,
+    )
+    
     return SectionUiBlock(
         type=SectionUiBlockType.SECTION,
         id=CANVAS_HEADER_SECTION,
@@ -70,7 +71,7 @@ def get_initial_canvas_blocks(num_plates: int = 1) -> SectionUiBlock:
     )
 
 
-def create_success_section(section_id: str, message: str) -> SectionUiBlock:
+def create_success_section(section_id: str, message: str):
     """
     Create a success message section.
     
@@ -81,6 +82,13 @@ def create_success_section(section_id: str, message: str) -> SectionUiBlock:
     Returns:
         SectionUiBlock: Section with success message
     """
+    from benchling_sdk.models import (
+        MarkdownUiBlock,
+        MarkdownUiBlockType,
+        SectionUiBlock,
+        SectionUiBlockType,
+    )
+    
     return SectionUiBlock(
         type=SectionUiBlockType.SECTION,
         id=section_id,
@@ -94,7 +102,7 @@ def create_success_section(section_id: str, message: str) -> SectionUiBlock:
     )
 
 
-def create_error_section(section_id: str, message: str) -> SectionUiBlock:
+def create_error_section(section_id: str, message: str):
     """
     Create an error message section.
     
@@ -105,6 +113,13 @@ def create_error_section(section_id: str, message: str) -> SectionUiBlock:
     Returns:
         SectionUiBlock: Section with error message
     """
+    from benchling_sdk.models import (
+        MarkdownUiBlock,
+        MarkdownUiBlockType,
+        SectionUiBlock,
+        SectionUiBlockType,
+    )
+    
     return SectionUiBlock(
         type=SectionUiBlockType.SECTION,
         id=section_id,
@@ -118,13 +133,22 @@ def create_error_section(section_id: str, message: str) -> SectionUiBlock:
     )
 
 
-def create_submit_success_section() -> SectionUiBlock:
+def create_submit_success_section():
     """
     Create the submit success section with reset button.
     
     Returns:
         SectionUiBlock: Section with success message and reset button
     """
+    from benchling_sdk.models import (
+        ButtonUiBlock,
+        ButtonUiBlockType,
+        MarkdownUiBlock,
+        MarkdownUiBlockType,
+        SectionUiBlock,
+        SectionUiBlockType,
+    )
+    
     return SectionUiBlock(
         type=SectionUiBlockType.SECTION,
         id="success_section",

@@ -1,10 +1,11 @@
 """Benchling client initialization and authentication."""
 import os
-from benchling_sdk.benchling import Benchling
-from benchling_sdk.auth.client_credentials_oauth2 import ClientCredentialsOAuth2
 
 
-def get_benchling_client() -> Benchling:
+def get_benchling_client():
+    """Get Benchling client with lazy imports."""
+    from benchling_sdk.benchling import Benchling
+    from benchling_sdk.auth.client_credentials_oauth2 import ClientCredentialsOAuth2
     """
     Initialize and return Benchling client with OAuth2 authentication.
     

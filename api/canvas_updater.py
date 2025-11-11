@@ -1,12 +1,10 @@
 """Canvas update utilities using CanvasBuilder."""
-from benchling_sdk.apps.canvas.framework import CanvasBuilder
-from benchling_sdk.models import SectionUiBlock
 from typing import List
 
 from benchling_client import get_benchling_client
 
 
-def update_canvas(canvas_id: str, app_id: str, feature_id: str, blocks: List[SectionUiBlock]) -> None:
+def update_canvas(canvas_id: str, app_id: str, feature_id: str, blocks: List) -> None:
     """
     Update a canvas with new UI blocks.
     
@@ -19,6 +17,8 @@ def update_canvas(canvas_id: str, app_id: str, feature_id: str, blocks: List[Sec
     Raises:
         Exception: If canvas update fails
     """
+    from benchling_sdk.apps.canvas.framework import CanvasBuilder
+    
     benchling = get_benchling_client()
     
     canvas_builder = CanvasBuilder(app_id, feature_id)
