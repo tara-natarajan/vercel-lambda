@@ -158,6 +158,7 @@ def create_submit_success_section():
 def update_canvas(canvas_id: str, app_id: str, feature_id: str, blocks):
     """Update a canvas with new UI blocks."""
     from benchling_sdk.apps.canvas.framework import CanvasBuilder
+    from benchling_sdk.apps.types import AppCanvasUpdate
     
     print(f"update_canvas called with canvas_id={canvas_id}, app_id={app_id}, feature_id={feature_id}")
     print(f"Number of blocks: {len(blocks)}")
@@ -169,10 +170,15 @@ def update_canvas(canvas_id: str, app_id: str, feature_id: str, blocks):
         
         print("Building canvas...")
         canvas_builder = CanvasBuilder(app_id, feature_id)
+        
+        # Set blocks directly on the canvas builder instead of appending
+        print(f"Setting {len(blocks)} blocks on canvas builder...")
         for i, block in enumerate(blocks):
-            print(f"Appending block {i}: {type(block).__name__}")
-            canvas_builder.blocks.append(block)
-        print("✓ Canvas built")
+            print(f"Block {i}: {type(block).__name__} with id={getattr(block, 'id', 'no-id')}")
+        
+        # Use the canvas builder's blocks list directly
+        canvas_builder.blocks[:] = blocks
+        print("✓ Blocks set")
         
         print("Converting to update...")
         canvas_update = canvas_builder.to_update()
