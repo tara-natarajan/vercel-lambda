@@ -319,20 +319,23 @@ class handler(BaseHTTPRequestHandler):
             
             print(f"Number of Plates from config: {num_plates}")
             
-            # Check for test mode environment variable
-            test_mode = os.environ.get('TEST_MODE', 'false').lower() == 'true'
+            # Check for ENABLE_BENCHLING_API environment variable
+            # By default, we skip the Benchling API call unless explicitly enabled
+            enable_api = os.environ.get('ENABLE_BENCHLING_API', 'false').lower() == 'true'
             
-            if test_mode:
-                print("TEST_MODE=true - Skipping Benchling API call")
+            if not enable_api:
+                print("ENABLE_BENCHLING_API not set to true - Skipping Benchling API call")
+                print("To enable Benchling API calls, set ENABLE_BENCHLING_API=true in Vercel environment variables")
                 return {
                     'status': 'success',
                     'canvas_id': canvas_id,
-                    'message': 'Canvas created successfully (TEST MODE)',
+                    'message': 'Webhook received successfully (Benchling API disabled)',
                     'num_plates': num_plates,
-                    'test_mode': True
+                    'note': 'Set ENABLE_BENCHLING_API=true to call Benchling API'
                 }
             
             # Update canvas with simple display block
+            print("ENABLE_BENCHLING_API=true - Calling Benchling API...")
             print("Updating canvas with standard blocks...")
             update_canvas(
                 canvas_id=canvas_id,
