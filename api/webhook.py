@@ -303,6 +303,8 @@ class handler(BaseHTTPRequestHandler):
     
     def handle_canvas_created(self, payload):
         """Handle canvas.created webhook event - simply display Number of Plates"""
+        import os
+        
         # Extract canvas data
         canvas_id = payload.get('canvas', {}).get('id')
         feature_id = payload.get('feature', {}).get('id')
@@ -316,6 +318,19 @@ class handler(BaseHTTPRequestHandler):
             num_plates = config.get('Number of Plates', '1')
             
             print(f"Number of Plates from config: {num_plates}")
+            
+            # Check for test mode environment variable
+            test_mode = os.environ.get('TEST_MODE', 'false').lower() == 'true'
+            
+            if test_mode:
+                print("TEST_MODE=true - Skipping Benchling API call")
+                return {
+                    'status': 'success',
+                    'canvas_id': canvas_id,
+                    'message': 'Canvas created successfully (TEST MODE)',
+                    'num_plates': num_plates,
+                    'test_mode': True
+                }
             
             # Update canvas with simple display block
             print("Updating canvas with standard blocks...")
