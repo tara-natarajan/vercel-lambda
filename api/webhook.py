@@ -362,6 +362,8 @@ class handler(BaseHTTPRequestHandler):
     
     def handle_user_interaction(self, payload):
         """Handle canvas.userInteracted webhook event - just return standard blocks"""
+        import os
+        
         # Extract interaction data
         canvas_id = payload.get('canvas', {}).get('id')
         user_id = payload.get('user', {}).get('id')
@@ -370,14 +372,29 @@ class handler(BaseHTTPRequestHandler):
         feature_id = payload.get('feature', {}).get('id')
         
         print(f"Canvas interaction - Canvas: {canvas_id}, User: {user_id}, Button: {button_id}")
-        print("Note: User interactions not implemented - returning standard blocks")
         
         # Get configuration
         config = payload.get('configuration', {})
         num_plates = config.get('Number of Plates', '1')
         
+        print(f"Number of Plates from config: {num_plates}")
+        
+        # Check for ENABLE_BENCHLING_API environment variable
+        enable_api = os.environ.get('ENABLE_BENCHLING_API', 'false').lower() == 'true'
+        
+        if not enable_api:
+            print("ENABLE_BENCHLING_API not set to true - Skipping Benchling API call")
+            return {
+                'status': 'success',
+                'message': 'User interaction received (Benchling API disabled)',
+                'button_id': button_id,
+                'num_plates': num_plates,
+                'note': 'Set ENABLE_BENCHLING_API=true to call Benchling API'
+            }
+        
         # Just return the same standard blocks
         try:
+            print("ENABLE_BENCHLING_API=true - Calling Benchling API...")
             update_canvas(
                 canvas_id=canvas_id,
                 app_id=app_id,
@@ -393,6 +410,8 @@ class handler(BaseHTTPRequestHandler):
         except Exception as e:
             error_msg = str(e) if str(e) else f'{type(e).__name__}: {repr(e)}'
             print(f"Error handling interaction: {error_msg}")
+            import traceback
+            traceback.print_exc()
             raise
     
     def handle_add_item(self, canvas_id: str, app_id: str, feature_id: str, payload: dict):
