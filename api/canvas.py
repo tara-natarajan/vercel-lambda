@@ -322,6 +322,22 @@ class handler(BaseHTTPRequestHandler):
             
             print(f"Number of Plates from config: {num_plates}")
             
+            # Check if environment variables are set
+            benchling_url = os.environ.get('BENCHLING_URL')
+            benchling_client_id = os.environ.get('BENCHLING_CLIENT_ID')
+            benchling_client_secret = os.environ.get('BENCHLING_CLIENT_SECRET')
+            
+            if not benchling_url or not benchling_client_id or not benchling_client_secret:
+                print("WARNING: Benchling environment variables not set - skipping API call")
+                print("To enable Benchling API, set: BENCHLING_URL, BENCHLING_CLIENT_ID, BENCHLING_CLIENT_SECRET")
+                return {
+                    'status': 'success',
+                    'canvas_id': canvas_id,
+                    'message': 'Webhook received (Benchling API not configured)',
+                    'num_plates': num_plates,
+                    'note': 'Set environment variables to enable Benchling API calls'
+                }
+            
             # Update canvas with simple display block
             print("Updating canvas with standard blocks...")
             update_canvas(
@@ -366,6 +382,21 @@ class handler(BaseHTTPRequestHandler):
         num_plates = config.get('Number of Plates', '1')
         
         print(f"Number of Plates from config: {num_plates}")
+        
+        # Check if environment variables are set
+        benchling_url = os.environ.get('BENCHLING_URL')
+        benchling_client_id = os.environ.get('BENCHLING_CLIENT_ID')
+        benchling_client_secret = os.environ.get('BENCHLING_CLIENT_SECRET')
+        
+        if not benchling_url or not benchling_client_id or not benchling_client_secret:
+            print("WARNING: Benchling environment variables not set - skipping API call")
+            return {
+                'status': 'success',
+                'message': 'User interaction received (Benchling API not configured)',
+                'button_id': button_id,
+                'num_plates': num_plates,
+                'note': 'Set environment variables to enable Benchling API calls'
+            }
         
         # Update canvas with standard blocks
         try:
