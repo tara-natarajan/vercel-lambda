@@ -21,38 +21,180 @@ except ImportError as e:
     print(f"Warning: benchling_sdk not available: {e}")
     BENCHLING_SDK_AVAILABLE = False
 
-# Import helper modules
-try:
-    print("Attempting to import benchling_client...")
-    from benchling_client import get_benchling_client
-    print("✓ benchling_client imported")
+# Constants (fallback if imports fail)
+ADD_BUTTON_ID = "add_item"
+REMOVE_BUTTON_ID = "remove_item"
+SUBMIT_BUTTON_ID = "submit"
+CANVAS_HEADER_SECTION = "canvas_header_section"
+HELPERS_AVAILABLE = True  # We'll check this later
+
+INSTRUCTIONS = """
+Welcome to the Vercel Lambda Canvas!\n
+Add or remove items using the buttons below, then click submit when ready.\n
+"""
+
+
+# Helper functions inlined to avoid import issues
+def get_benchling_client():
+    """Initialize Benchling client."""
+    import os
+    from benchling_sdk.benchling import Benchling
+    from benchling_sdk.auth.client_credentials_oauth2 import ClientCredentialsOAuth2
     
-    print("Attempting to import canvas_blocks...")
-    from canvas_blocks import (
-        ADD_BUTTON_ID,
-        REMOVE_BUTTON_ID,
-        SUBMIT_BUTTON_ID,
-        get_initial_canvas_blocks,
-        create_success_section,
-        create_error_section,
-        create_submit_success_section,
+    base_url = os.environ.get('BENCHLING_URL')
+    client_id = os.environ.get('BENCHLING_CLIENT_ID')
+    client_secret = os.environ.get('BENCHLING_CLIENT_SECRET')
+    
+    if not base_url:
+        raise ValueError("BENCHLING_URL must be set in environment variables")
+    if not client_id or not client_secret:
+        raise ValueError("BENCHLING_CLIENT_ID and BENCHLING_CLIENT_SECRET must be set in environment variables")
+    
+    token_url = f"{base_url}/api/v2/token"
+    
+    return Benchling(
+        url=base_url,
+        auth_method=ClientCredentialsOAuth2(client_id, client_secret, token_url),
     )
-    print("✓ canvas_blocks imported")
+
+
+def get_initial_canvas_blocks(num_plates: int = 1):
+    """Generate initial canvas UI blocks."""
+    from benchling_sdk.models import (
+        ButtonUiBlock,
+        ButtonUiBlockType,
+        MarkdownUiBlock,
+        MarkdownUiBlockType,
+        SectionUiBlock,
+        SectionUiBlockType,
+        TextInputUiBlock,
+        TextInputUiBlockType,
+    )
     
-    print("Attempting to import canvas_updater...")
-    from canvas_updater import update_canvas
-    print("✓ canvas_updater imported")
+    return SectionUiBlock(
+        type=SectionUiBlockType.SECTION,
+        id=CANVAS_HEADER_SECTION,
+        children=[
+            MarkdownUiBlock(
+                type=MarkdownUiBlockType.MARKDOWN,
+                id="instructions",
+                value=INSTRUCTIONS
+            ),
+            TextInputUiBlock(
+                type=TextInputUiBlockType.TEXT_INPUT,
+                id="plates_input",
+                label=f"Number of Plates (configured: {num_plates})",
+                enabled=True,
+                value=str(num_plates),
+            ),
+            ButtonUiBlock(
+                type=ButtonUiBlockType.BUTTON,
+                id=ADD_BUTTON_ID,
+                label="Add Item",
+                enabled=True,
+            ),
+            ButtonUiBlock(
+                type=ButtonUiBlockType.BUTTON,
+                id=REMOVE_BUTTON_ID,
+                label="Remove Item",
+                enabled=True,
+            ),
+            ButtonUiBlock(
+                type=ButtonUiBlockType.BUTTON,
+                id=SUBMIT_BUTTON_ID,
+                label="Submit",
+                enabled=True,
+            ),
+        ],
+    )
+
+
+def create_success_section(section_id: str, message: str):
+    """Create a success message section."""
+    from benchling_sdk.models import (
+        MarkdownUiBlock,
+        MarkdownUiBlockType,
+        SectionUiBlock,
+        SectionUiBlockType,
+    )
     
-    HELPERS_AVAILABLE = True
-    print("All helpers available!")
-except ImportError as e:
-    print(f"Warning: helper modules not available: {e}")
-    import traceback
-    traceback.print_exc()
-    HELPERS_AVAILABLE = False
-    ADD_BUTTON_ID = "add_item"
-    REMOVE_BUTTON_ID = "remove_item"
-    SUBMIT_BUTTON_ID = "submit"
+    return SectionUiBlock(
+        type=SectionUiBlockType.SECTION,
+        id=section_id,
+        children=[
+            MarkdownUiBlock(
+                type=MarkdownUiBlockType.MARKDOWN,
+                id=f"{section_id}_message",
+                value=f"✅ {message}"
+            ),
+        ],
+    )
+
+
+def create_error_section(section_id: str, message: str):
+    """Create an error message section."""
+    from benchling_sdk.models import (
+        MarkdownUiBlock,
+        MarkdownUiBlockType,
+        SectionUiBlock,
+        SectionUiBlockType,
+    )
+    
+    return SectionUiBlock(
+        type=SectionUiBlockType.SECTION,
+        id=section_id,
+        children=[
+            MarkdownUiBlock(
+                type=MarkdownUiBlockType.MARKDOWN,
+                id=f"{section_id}_message",
+                value=f"❌ **Error**\n\n{message}"
+            ),
+        ],
+    )
+
+
+def create_submit_success_section():
+    """Create the submit success section with reset button."""
+    from benchling_sdk.models import (
+        ButtonUiBlock,
+        ButtonUiBlockType,
+        MarkdownUiBlock,
+        MarkdownUiBlockType,
+        SectionUiBlock,
+        SectionUiBlockType,
+    )
+    
+    return SectionUiBlock(
+        type=SectionUiBlockType.SECTION,
+        id="success_section",
+        children=[
+            MarkdownUiBlock(
+                type=MarkdownUiBlockType.MARKDOWN,
+                id="success_message",
+                value="✅ **Submitted successfully!**\n\nYour data has been processed."
+            ),
+            ButtonUiBlock(
+                type=ButtonUiBlockType.BUTTON,
+                id="reset_button",
+                label="Start Over",
+                enabled=True,
+            ),
+        ],
+    )
+
+
+def update_canvas(canvas_id: str, app_id: str, feature_id: str, blocks):
+    """Update a canvas with new UI blocks."""
+    from benchling_sdk.apps.canvas.framework import CanvasBuilder
+    
+    benchling = get_benchling_client()
+    
+    canvas_builder = CanvasBuilder(app_id, feature_id)
+    for block in blocks:
+        canvas_builder.blocks.append(block)
+    
+    canvas_update = canvas_builder.to_update()
+    benchling.apps.update_canvas(canvas_id=canvas_id, canvas=canvas_update)
 
 
 class handler(BaseHTTPRequestHandler):
@@ -63,11 +205,6 @@ class handler(BaseHTTPRequestHandler):
         print("POST request received")
         print(f"Path: {self.path}")
         print(f"Headers: {dict(self.headers)}")
-        
-        # Check if dependencies are available
-        if not HELPERS_AVAILABLE:
-            self.send_error_response(500, 'Helper modules not available - check dependencies')
-            return
         
         try:
             # Read the request body
